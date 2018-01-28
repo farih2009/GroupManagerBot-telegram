@@ -83,6 +83,7 @@ def non_vulgarity(bot, update):
 	try:
 		if leaderboard[sender_id][2] >= 50:
 			leaderboard[sender_id][0] -= 1
+			leaderboard[sender_id][2] = 0 
 		if leaderboard[sender_id][0] <= 0:
 			del leaderboard[sender_id]
 	except:
