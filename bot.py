@@ -66,9 +66,26 @@ def start(bot, update):
 	bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
 	bot.send_message(chat_id=update.message.chat_id, text="Hi there! 😘 Use /halp to find out the rules and all the available commands.")
 
-def finals_reminder(bot, update):
+def non_vulgarity(bot, update):
 	rand = random()
 	chat_id = update.message.chat_id
+	sender = update.message.from_user
+	sender_name = str(sender.first_name)
+	sender_id = sender.id
+
+	# Increment non-vulgarity score of user if he/she is a vulgarity user
+	try:
+		leaderboard[sender_id][2] += 1
+	except:
+		pass
+
+	# Decrement vulgarity score of user if non-vulgarity count reaches 50
+	try:
+		if leaderboard[sender_id][2] >= 50:
+			leaderboard[sender_id][0] -= 1
+	except:
+		pass
+
 	# A 5% chance to give finals reminder
 	if rand <= 0.05:
 		bot.send_chat_action(chat_id=chat_id, action=telegram.ChatAction.TYPING)
@@ -86,8 +103,6 @@ def finals_reminder(bot, update):
 	if datetime.date.today() - date_last_added >= 1:
 		banned_list_custom.append(RandomWords().random_word())
 
-		
-
 
 def vulgarities(bot, update):
 	chat_id = update.message.chat_id
@@ -99,17 +114,22 @@ def vulgarities(bot, update):
 	try:
 		leaderboard[sender_id][0] += 1
 	except:
-		leaderboard[sender_id] = [1, sender_name]
+		leaderboard[sender_id] = [1, sender_name, 0]
 
 	chosen = randint(0, len(scolding_phrases) - 1)
 	bot.send_chat_action(chat_id=chat_id, action=telegram.ChatAction.TYPING)
 	bot.send_message(chat_id=chat_id, text=scolding_phrases[chosen] + sender_name + "! " + scolding_emojis[chosen])
-	#bot.kick_chat_member(chat_id=chat_id, user_id=update.message.from_user.id)
+	# Kick the member with a chance proportional to their score
+	rand = random()
+	prob = leaderboard[sender_id][0] / 100
+	if rand <= min(prob, 1):
+		bot.kick_chat_member(chat_id=chat_id, user_id=update.message.from_user.id)
 
 def say_lyrics(bot, update):
 	chat_id = update.message.chat_id
 	bot.send_chat_action(chat_id=chat_id, action=telegram.ChatAction.TYPING)
 	bot.send_message(chat_id=chat_id, text=song_dict[song_holder])
+
 
 def show_banned(bot, update):
 	chat_id = update.message.chat_id
@@ -120,6 +140,7 @@ def show_banned(bot, update):
 	for word in banned_list_custom:
 		output += ("  •  " + word + "\n")	
 	bot.send_message(chat_id=chat_id, text="<b>Here is the list of banned words:</b>\n" + output, parse_mode=telegram.ParseMode.HTML)
+
 
 def add_banned(bot, update, args):
 	chat_id = update.message.chat_id
@@ -134,6 +155,7 @@ def add_banned(bot, update, args):
 		bot.send_message(chat_id=chat_id, text="New banned word added! 😋")
 	else:
 		bot.send_message(chat_id=chat_id, text="Word already exist in list! 😒")
+
 
 def remove_banned(bot, update, args):
 	chat_id = update.message.chat_id
@@ -150,6 +172,7 @@ def remove_banned(bot, update, args):
 		bot.send_message(chat_id=chat_id, text="Default banned words cannot be removed! 😤")
 	else:	
 		bot.send_message(chat_id=chat_id, text="Word does not exist!")
+
 
 def naughty_list(bot, update):
 	chat_id = update.message.chat_id
@@ -168,8 +191,9 @@ def halp(bot, update):
 	output = "<b>Rules:</b>\nMind your manners, or risk getting KICKED OUT!\n"
 	output += "\n<b>Supported commands:</b>"
 	for cmd in command_dict:
-		output += "\n<b>" + cmd + ": </b>" + command_dict[cmd] 
+		output += "\n" + cmd + " - " + command_dict[cmd] 
 	bot.send_message(chat_id=chat_id, text=output, parse_mode=telegram.ParseMode.HTML)
+
 
 def joke(bot, update):
 	chat_id = update.message.chat_id
@@ -188,7 +212,7 @@ banned_handler = CommandHandler('banned', show_banned)
 add_handler = CommandHandler('add', add_banned, pass_args=True)
 remove_handler = CommandHandler('remove', remove_banned, pass_args=True)
 leaderboard_handler = CommandHandler('naughtyList', naughty_list)
-finals_handler = MessageHandler(Filters.text, finals_reminder)
+non_vulgarity_handler = MessageHandler(Filters.text, non_vulgarity)
 joke_handler = CommandHandler('joke', joke)
 
 # Dispatching: As soon as you add new handlers to dispatcher, they are in effect.
@@ -200,20 +224,8 @@ dispatcher.add_handler(vulgarities_handler)
 dispatcher.add_handler(song_handler)
 dispatcher.add_handler(add_handler)
 dispatcher.add_handler(joke_handler)
-dispatcher.add_handler(finals_handler)
+dispatcher.add_handler(non_vulgarity_handler)
 dispatcher.add_handler(leaderboard_handler)
 
 # Run the bot
 updater.start_polling()
-
-
-
-"""
-bot.send_message(chat_id=update.message.chat_id, text='<b>bold</b> <i>italic</i> <a href="http://google.com">link</a>.', parse_mode=telegram.ParseMode.HTML)
-
-Custom keyboard code:
-	custom_keyboard = [['top-left', 'top-right'], ['bottom-left', 'bottom-right']]
-	reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
-	bot.send_message(chat_id=chat_id, text="Custom Keyboard Test", reply_markup=reply_markup)
-
-"""
