@@ -28,6 +28,8 @@ song_dict = {
 	'oppa':'Oppa gangnam style 🕺🏻', \
 	'party':'Come on Barbie, let\'s go party! 🎊', \
 	'phone':'You used to call me on my cell phone 📲	', \
+	'pi':'3.14159265359', \
+	'pie':'3.14159265359', \
 	'plastic':'Life in plastic, it\'s fantastic!', \
 	'problem':'I\'ve got one less problem without you 👉🏻', \
 	'rock':'We will, we will rock you', \

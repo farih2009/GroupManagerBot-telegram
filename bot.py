@@ -11,14 +11,21 @@ from random import *
 import re
 import datetime
 from lyrics import *
-
+from token import *
 
 TOKEN = '424538023:AAG_WU0hiDPABPFKnm94UiatzjUFOuA6CP0'
-
 
 bot = telegram.Bot(token=TOKEN)
 updater = Updater(token=TOKEN)
 dispatcher = updater.dispatcher
+command_dict = {
+	"/start":"Starts the bot", \
+	"/banned":"Shows list of banned words", \
+	"/add WORD":"Adds WORD into banned list", \
+	"/remove WORD":"Removes WORD into banned list", \
+	"/naughtyList":"Shows the number of banned words used for the top 10 users", \
+	"/joke":"Tells you a joke"
+	}
 scolding_phrases = ["Mind your language, ", "Don't be rude, ", "Watch your mouth, ", "No vulgarities! Be a Francis, ", "Cool kids don't swear, ", "Mind your freaking manners, ", "Francis say cannot swear, ", "Eh don't vulgar ah, "]
 scolding_emojis = ["🙄", "😤", "🤐", "😑", "😲", "🖕🏻", "😨", "😡"]
 vulgarity_list = ['fuck', 'fug', 'wtf', 'frick', 'freak', 'asshole', 'ccb', 'knn', 'bitch', 'bij', 'screw', 'kanina', 'diu', 'smlj']
@@ -57,7 +64,7 @@ filter_songs = FilterSongs()
 # Functions
 def start(bot, update):
 	bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
-	bot.send_message(chat_id=update.message.chat_id, text="😘😘😘😘😘😘😘😘😘")
+	bot.send_message(chat_id=update.message.chat_id, text="Hi there! 😘 Use /halp to find out the rules and all the available commands.")
 
 def finals_reminder(bot, update):
 	rand = random()
@@ -81,10 +88,6 @@ def finals_reminder(bot, update):
 
 		
 
-def caps(bot, update, args):
-	bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
-	text_caps = ' '.join(args).upper()
-	bot.send_message(chat_id=update.message.chat_id, text=text_caps)
 
 def vulgarities(bot, update):
 	chat_id = update.message.chat_id
@@ -158,6 +161,16 @@ def naughty_list(bot, update):
 		output += str(i+1) + ".  " + user[1] + "  |  Score: " + str(user[0]) + "\n"
 	bot.send_message(chat_id=chat_id, text=output, parse_mode=telegram.ParseMode.HTML)
 
+
+def halp(bot, update):
+	chat_id = update.message.chat_id
+	bot.send_chat_action(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+	output = "<b>Rules:</b>\nMind your manners, or risk getting KICKED OUT!\n"
+	output += "\n<b>Supported commands:</b>"
+	for cmd in command_dict:
+		output += "\n<b>" + cmd + ": </b>" + command_dict[cmd] 
+	bot.send_message(chat_id=chat_id, text=output, parse_mode=telegram.ParseMode.HTML)
+
 def joke(bot, update):
 	chat_id = update.message.chat_id
 	sender_name = str(update.message.from_user.first_name)
@@ -165,20 +178,22 @@ def joke(bot, update):
 	bot.send_message(chat_id=chat_id, text="Here's a joke: " + sender_name)
 
 
+
 # Handlers
 start_handler = CommandHandler('start', start)
 vulgarities_handler = MessageHandler(filter_vulgar, vulgarities)
+halp_handler = CommandHandler('halp', halp)
 song_handler = MessageHandler(filter_songs, say_lyrics)
 banned_handler = CommandHandler('banned', show_banned)
 add_handler = CommandHandler('add', add_banned, pass_args=True)
 remove_handler = CommandHandler('remove', remove_banned, pass_args=True)
 leaderboard_handler = CommandHandler('naughtyList', naughty_list)
 finals_handler = MessageHandler(Filters.text, finals_reminder)
-caps_handler = CommandHandler('caps', caps, pass_args=True)
 joke_handler = CommandHandler('joke', joke)
 
 # Dispatching: As soon as you add new handlers to dispatcher, they are in effect.
 dispatcher.add_handler(start_handler)
+dispatcher.add_handler(halp_handler)
 dispatcher.add_handler(remove_handler)
 dispatcher.add_handler(banned_handler)
 dispatcher.add_handler(vulgarities_handler)
@@ -187,7 +202,6 @@ dispatcher.add_handler(add_handler)
 dispatcher.add_handler(joke_handler)
 dispatcher.add_handler(finals_handler)
 dispatcher.add_handler(leaderboard_handler)
-dispatcher.add_handler(caps_handler)
 
 # Run the bot
 updater.start_polling()
